@@ -1,0 +1,40 @@
+
+
+server:
+    port: ${SERVER_PORT:8080}
+    servlet:
+      context-path: /
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+  data: 
+    mongodb: 
+      host: localhost
+      port: 27017
+      database: test
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+
+# openapi:
+#   version: 1.0.0
+#   license: Apache License, Version 2.0
+#   licenseUrl: http://www.apache.org/licenses/LICENSE-2.0
+#   contact:
+#      name: DS Lab
+#      url: www.smartcommunitylab.it
+#      email: info@smartcommunitylab.it
+                      
+# springdoc:
+#   swagger-ui:
+#     disable-swagger-default-url: true
+#   api-docs:
+#     path: /interlink/v3/api-docs
+
+  
+game:
+  createDemo: ${CREATE_DEMO_GAME:false}
+  
+
