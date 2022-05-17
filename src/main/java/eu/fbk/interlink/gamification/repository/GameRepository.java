@@ -17,5 +17,7 @@ public interface GameRepository extends MongoRepository<InterlinkGame, String>{
 	List<InterlinkGame> findByTagList(List<String> tagList);
 	
 	List<InterlinkGame> findByProcessId(String processId);
+	
+	Optional<InterlinkGame> findByProcessIdAndName(String processId, String name);
 
 }

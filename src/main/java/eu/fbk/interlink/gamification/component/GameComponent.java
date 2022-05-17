@@ -50,6 +50,11 @@ public class GameComponent {
 		this.gameRepository.deleteById(id);
 		
 	}
+	
+	public Optional<InterlinkGame> findByProcessIdAndName(String processId, String name) {
+		return this.gameRepository.findByProcessIdAndName(processId, name);
+	
+	}
 
 	
 

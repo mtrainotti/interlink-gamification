@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import eu.trentorise.game.model.ChallengeConcept;
 import eu.trentorise.game.model.Level;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,22 +18,18 @@ public class InterlinkGame {
 	protected String processId;
 	protected List<String> tagList;
 	protected List<InterlinkTask> taskList;
-	protected List<Level> levelList;
+
 	protected boolean active = true;
-	protected List<ChallengeConcept> challengeList;
+
 
 	public InterlinkGame() {
+		if (tagList == null) 
+			tagList = new ArrayList<String>();
+		if (taskList == null) 
+			taskList = new ArrayList<InterlinkTask>();
 	}
 
-	public InterlinkGame(String name, String processId, List<String> tagList, List<InterlinkTask> taskList, List<Level> levelList, List<ChallengeConcept> challengeList) {
-
-		this.name = name;
-		this.processId = processId;
-		this.tagList = tagList;
-		this.taskList = taskList;
-		this.levelList = levelList;
-		this.challengeList = challengeList;
-	}
+	
 
 	public String getId() {
 		return id;
@@ -82,55 +79,7 @@ public class InterlinkGame {
 		this.active = active;
 	}
 
-	public List<Level> getLevelList() {
-		return levelList;
-	}
-
-	public void setLevelList(List<Level> levelList) {
-		this.levelList = levelList;
-	}
-	
-	public void addLevel(Level level) {
-		this.levelList.add(level);
-	}
-	
-	public void removeLevel(String levelName) {
-		Level toRemove = null;
-		for (Level level : this.levelList) {
-		    if (level.getName().equals(levelName)) {
-		    	toRemove = level;
-		    	break;
-		    }
-		}
-		this.levelList.remove(toRemove);
 		
-	}
-	
-	
-
-	public List<ChallengeConcept> getChallengeList() {
-		return challengeList;
-	}
-
-	public void setChallengeList(List<ChallengeConcept> challengeList) {
-		this.challengeList = challengeList;
-	}
-
-	public void addChallenge(ChallengeConcept challenge) {
-		this.challengeList.add(challenge);
-	}
-	
-	public void removeChallenge(String challengeId) {
-		ChallengeConcept toRemove = null;
-		for (ChallengeConcept challenge : this.challengeList) {
-		    if (challenge.getId().equals(id)) {
-		    	toRemove = challenge;
-		    	break;
-		    }
-		}
-		this.challengeList.remove(toRemove);
-		
-	}
 	public List<InterlinkTask> getTaskList() {
 		return taskList;
 	}
@@ -153,6 +102,16 @@ public class InterlinkGame {
 		}
 		this.taskList.remove(toRemove);
 		
+	}
+	
+	public static InterlinkGame of (InterlinkGameTemplate template) {
+		InterlinkGame game = new InterlinkGame();
+		game.setActive(true);
+		game.setName(template.getName());
+		game.setProcessId(template.getProcessId());
+		game.setTagList(template.getTagList());
+		game.setTaskList(template.getTaskList());
+		return game;
 	}
 
 	@Override
@@ -179,8 +138,7 @@ public class InterlinkGame {
 				+ ", processId='" + this.processId + '\'' 
 				+", tagList=[" + this.tagList  
 				+", taskList=[" + this.taskList  
-				+", levelList=[" + this.levelList + 
-				"]}";
+				+ "]}";
 	}
 
 }

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import eu.fbk.interlink.gamification.component.GameTemlateComponent;
+import eu.fbk.interlink.gamification.component.GameTemplateComponent;
 import eu.fbk.interlink.gamification.domain.InterlinkGame;
 import eu.fbk.interlink.gamification.domain.InterlinkGameTemplate;
 
@@ -29,7 +29,7 @@ public class GameTemplateRestController {
 	
 	
 	@Autowired
-    private GameTemlateComponent gameTemplateComponent;
+    private GameTemplateComponent gameTemplateComponent;
 	
 	
 	/**
@@ -70,6 +70,22 @@ public class GameTemplateRestController {
         return gameTemplateComponent.findByTags(tagList);
     }
     
+    /**
+	 * Refresh template from files
+	 * @return List of GameTemplate
+	 */
+    @GetMapping(value = "/gametemplate/refresh")
+    public ResponseEntity<?> refresh() {
+    	
+        try {
+			gameTemplateComponent.refresh();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			new ResponseEntity("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+        return new ResponseEntity("Template has been refreshed", HttpStatus.OK);
+    }
     
     
 
