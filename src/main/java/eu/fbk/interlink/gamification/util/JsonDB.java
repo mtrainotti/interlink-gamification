@@ -134,9 +134,11 @@ public class JsonDB {
 
 					Optional<InterlinkGameTemplate> tempTemplate = this.gameTemplateComponent
 							.findByProcessIdAndName(template.getProcessId(), template.getName());
-					if (tempTemplate.isEmpty()) {
-						this.gameTemplateComponent.saveOrUpdateGame(template);
+					if (tempTemplate.isPresent()) {
+						this.logger.debug("delete template " + tempTemplate.get().getId());
+						this.gameTemplateComponent.deleteById(tempTemplate.get().getId());
 					}
+					this.gameTemplateComponent.saveOrUpdateGame(template);
 				}
 			});
 		} catch (Exception e) {
@@ -187,9 +189,12 @@ public class JsonDB {
 
 						Optional<InterlinkGameTemplate> tempTemplate = this.gameTemplateComponent
 								.findByProcessIdAndName(template.getProcessId(), template.getName());
-						if (tempTemplate.isEmpty()) {
-							this.gameTemplateComponent.saveOrUpdateGame(template);
+						if (tempTemplate.isPresent()) {
+							this.logger.debug("delete template " + tempTemplate.get().getId());
+							this.gameTemplateComponent.deleteById(tempTemplate.get().getId());
 						}
+						this.gameTemplateComponent.saveOrUpdateGame(template);
+						
 					}
 				});
 

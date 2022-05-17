@@ -50,6 +50,8 @@ public class GameTemplateComponent {
 	}
 	// GameTemplate saveOrUpdateGame(Game game);
 
-	// void deleteGameById(String id)
+	public void deleteById(String gametempleteId) {
+		this.gameTemplateRepository.deleteById(gametempleteId);
+	}
 
 }
