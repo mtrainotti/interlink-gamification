@@ -179,7 +179,7 @@ public class JsonDB {
 		for (File file : listOfFiles) {
 			if (file.isFile()) {
 				logger.info("load template from file " + file.getName());
-				
+				try {
 				Map<?, ?> map = mapper.readValue(file, Map.class);
 				map.entrySet().forEach(entry -> {
 					Map<String, Object> gameData = (Map<String, Object>) entry.getValue();
@@ -197,6 +197,9 @@ public class JsonDB {
 						
 					}
 				});
+				} catch (java.io.CharConversionException ex) {
+					this.logger.info("file " + file.getName() + "not valid");
+				}
 
 			}
 		}

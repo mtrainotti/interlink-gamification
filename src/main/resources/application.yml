@@ -23,5 +23,18 @@ import:
 
 export: 
   dir: /Users/mtrainotti/dev
-  
 
+
+#
+# RABBITMQ CONFIGURATIONS
+#
+
+rabbitmq: 
+  enabled: ${RABBITMQ_ENABLED:true}
+  host: ${RABBITMQ_HOST:localhost}
+  virtualhost: ${RABBITMQ_VIRTUALHOST:interlink}
+  port: ${RABBITMQ_PORT:5672}
+  user: ${RABBITMQ_USER:guest}
+  password: ${RABBITMQ_PASSWORD:guest}
+  pngExchangeName: ${RABBITMQ_PNGEXCHANGENAME:ge-notifications}
+  pngRoutingKeyPrefix: ${RABBITMQ_PNGROUTINGKEYPREFIX:game}
