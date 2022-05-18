@@ -172,7 +172,7 @@ public class JsonDB {
 	public void importGameTemplateDB() throws Exception {
 
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
+		this.logger.debug("import template from  " + importPath);
 		File folder = new File(importPath);
 		File[] listOfFiles = folder.listFiles();
 

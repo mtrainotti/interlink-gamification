@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import eu.fbk.interlink.gamification.domain.InterlinkGame;
@@ -17,6 +18,7 @@ public class GameTemplateComponent {
 	@Autowired
 	private GameTemplateRepository gameTemplateRepository;
 
+	@Lazy
 	@Autowired
 	private JsonDB jsonDB;
 
