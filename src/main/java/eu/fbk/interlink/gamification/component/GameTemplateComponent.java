@@ -38,7 +38,7 @@ public class GameTemplateComponent {
 	}
 
 	public List<InterlinkGameTemplate> findByTags(List<String> tagList) {
-		return this.gameTemplateRepository.findByTagList(tagList);
+		return this.gameTemplateRepository.findByTagListIn(tagList);
 
 	}
 
