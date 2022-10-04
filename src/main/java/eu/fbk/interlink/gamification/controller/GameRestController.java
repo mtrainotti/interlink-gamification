@@ -28,6 +28,7 @@ import eu.fbk.interlink.gamification.domain.InterlinkGame;
 import eu.fbk.interlink.gamification.domain.InterlinkGameTemplate;
 import eu.fbk.interlink.gamification.domain.InterlinkPlayer;
 import eu.fbk.interlink.gamification.domain.InterlinkTask;
+import eu.fbk.interlink.gamification.util.ControllerUtils;
 import eu.trentorise.game.model.ChallengeConcept;
 import eu.trentorise.game.model.GameStatistics;
 import eu.trentorise.game.model.Level;
@@ -102,6 +103,8 @@ public class GameRestController {
 	public ResponseEntity<?> newGameFromTemplate(@PathVariable String processId, @RequestBody InterlinkGameTemplate template
 			) {
 
+		processId = ControllerUtils.decodePathVariable(processId);
+		
 		if ((gameComponent.findByProcessIdAndName(processId, template.getName()).isPresent())) {
 			return new ResponseEntity("Game "+template.getName()+" for process "+processId+ " is already present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -114,7 +117,10 @@ public class GameRestController {
 				this.logger.error("Error in game cration from file " + template.getFilename()+" ", e);
 				return new ResponseEntity("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-		} 
+		} else {
+			this.logger.error("Missing filename inside template");
+			return new ResponseEntity("Internal server error", HttpStatus.BAD_REQUEST);
+		}
 		
 		// instantiate the game in interlink gamification engine
 		InterlinkGame newGame = InterlinkGame.of(template);
@@ -215,6 +221,7 @@ public class GameRestController {
 			@PathVariable(name = "taskId") String taskId,
 			@RequestBody InterlinkPlayer player) {
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);

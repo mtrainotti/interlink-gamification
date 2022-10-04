@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import eu.fbk.interlink.gamification.component.GameTemplateComponent;
 import eu.fbk.interlink.gamification.domain.InterlinkGameTemplate;
+import eu.fbk.interlink.gamification.util.ControllerUtils;
 
 @RestController
 @RequestMapping("/interlink")
@@ -57,6 +58,7 @@ public class GameTemplateRestController {
 	 */
 	@GetMapping(value = "/gametemplate/{gameTemplateId}")
 	public Optional<InterlinkGameTemplate> getGameTemplate(@PathVariable String gameTemplateId) {
+		gameTemplateId = ControllerUtils.decodePathVariable(gameTemplateId);
 		return gameTemplateComponent.findById(gameTemplateId);
 	}
 
