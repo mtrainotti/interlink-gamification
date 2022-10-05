@@ -3,8 +3,8 @@ package eu.fbk.interlink.gamification.controller;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -26,7 +26,7 @@ import eu.fbk.interlink.gamification.util.ControllerUtils;
 @Profile({ "no-sec", "sec", "default" })
 public class GameTemplateRestController {
 
-	Logger logger = LoggerFactory.getLogger(GameTemplateRestController.class);
+	private static final Logger logger = LogManager.getLogger(GameTemplateRestController.class); 
 
 	@Autowired
 	private GameTemplateComponent gameTemplateComponent;
@@ -44,7 +44,7 @@ public class GameTemplateRestController {
 			return new ResponseEntity("Gametemplate is already present", HttpStatus.PRECONDITION_FAILED);
 		}
 		// hook to instatiate the new game in FBK gamification engine
-		this.logger.info("New gametemplate " + gametemplate.getName() + " of processId " + gametemplate.getProcessId()
+		logger.info("New gametemplate " + gametemplate.getName() + " of processId " + gametemplate.getProcessId()
 				+ "has been created");
 		gameTemplateComponent.saveOrUpdateGame(gametemplate);
 		return new ResponseEntity("Game updated successfully", HttpStatus.OK);
@@ -59,6 +59,7 @@ public class GameTemplateRestController {
 	@GetMapping(value = "/gametemplate/{gameTemplateId}")
 	public Optional<InterlinkGameTemplate> getGameTemplate(@PathVariable String gameTemplateId) {
 		gameTemplateId = ControllerUtils.decodePathVariable(gameTemplateId);
+		logger.info("/gametemplate/{gameTemplateId}");
 		return gameTemplateComponent.findById(gameTemplateId);
 	}
 
