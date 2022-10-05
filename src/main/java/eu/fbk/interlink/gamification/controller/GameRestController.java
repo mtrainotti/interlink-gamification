@@ -182,6 +182,7 @@ public class GameRestController {
 	@PutMapping(value = "/game/{gameId}/task")
 	public ResponseEntity<?> updateTask(@PathVariable String gameId, @RequestBody InterlinkTask task) {
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
@@ -198,7 +199,15 @@ public class GameRestController {
 				element.setExploitation(task.getExploitation());
 				element.setManagement(task.getManagement());
 				element.setSubtaskList(task.getSubtaskList());
-				element.setPlayers(task.getPlayers());
+				for (InterlinkPlayer player : element.getPlayers()) {
+					for (InterlinkPlayer updated : task.getPlayers()) {
+						if (updated.getId().equalsIgnoreCase(player.getId())) {
+							player.setDevelopment(updated.getDevelopment());
+							player.setExploitation(updated.getExploitation());
+							player.setManagement(updated.getManagement());
+						}
+					}
+				}
 			}
 		}
 		gameComponent.saveOrUpdateGame(game.get());
@@ -217,6 +226,8 @@ public class GameRestController {
 			@PathVariable(name = "taskId") String taskId, @RequestBody InterlinkPlayer player) {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
+		String idTask = ControllerUtils.decodePathVariable(taskId);
+		
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
@@ -226,18 +237,29 @@ public class GameRestController {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
 
-		boolean update = false;
+		InterlinkTask task = game.get().getTaskList().stream().filter(matchedTask -> idTask.equals(matchedTask.getId()))
+				.findAny().orElse(null);
 
-		for (InterlinkTask element : game.get().getTaskList()) {
-			if (element.getId().equals(taskId)) {
-				element.addPlayer(player);
+		if (task != null) {
+			boolean update = false;
+			InterlinkPlayer isPresent = task.getPlayers().stream()
+					.filter(findPlayer -> player.getId().equals(findPlayer.getId())).findAny().orElse(null);
+			if (isPresent == null) {
+				task.addPlayer(player);
 				update = true;
+			} else {
+				return new ResponseEntity("Player " + player.getId() + " already present inside task " + taskId,
+						HttpStatus.PRECONDITION_FAILED);
 			}
+			if (update) {
+				gameComponent.saveOrUpdateGame(game.get());
+				return new ResponseEntity("Player " + player.getId() + " has been added to task " + taskId,
+						HttpStatus.OK);
+			}
+		} else {
+			return new ResponseEntity("Task " + taskId + " not present inside game", HttpStatus.PRECONDITION_FAILED);
 		}
-		if (update) {
-			gameComponent.saveOrUpdateGame(game.get());
-			return new ResponseEntity("Player " + player.getId() + " has been added to task " + taskId, HttpStatus.OK);
-		}
+
 		return new ResponseEntity("Player " + player.getId() + " has non been added to subtask " + taskId,
 				HttpStatus.PRECONDITION_FAILED);
 	}
