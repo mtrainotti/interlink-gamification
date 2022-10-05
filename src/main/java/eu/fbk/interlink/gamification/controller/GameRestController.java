@@ -1,14 +1,11 @@
 package eu.fbk.interlink.gamification.controller;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import org.kie.api.task.model.Task;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -19,7 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.fbk.interlink.gamification.component.GameComponent;
@@ -29,9 +25,7 @@ import eu.fbk.interlink.gamification.domain.InterlinkGameTemplate;
 import eu.fbk.interlink.gamification.domain.InterlinkPlayer;
 import eu.fbk.interlink.gamification.domain.InterlinkTask;
 import eu.fbk.interlink.gamification.util.ControllerUtils;
-import eu.trentorise.game.model.ChallengeConcept;
 import eu.trentorise.game.model.GameStatistics;
-import eu.trentorise.game.model.Level;
 import eu.trentorise.game.model.PlayerState;
 
 @RestController
@@ -39,7 +33,7 @@ import eu.trentorise.game.model.PlayerState;
 @Profile({ "no-sec", "sec", "default" })
 public class GameRestController {
 
-	Logger logger = LoggerFactory.getLogger(GameRestController.class);
+	private static final Logger logger = LogManager.getLogger(GameRestController.class);
 
 	@Autowired
 	private GameComponent gameComponent;
@@ -65,13 +59,14 @@ public class GameRestController {
 	 */
 	@GetMapping(value = "/game/{gameId}")
 	public Optional<InterlinkGame> getGame(@PathVariable String gameId) {
-		Optional<InterlinkGame> game =  gameComponent.findById(gameId);
-		
+		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+
 		return game;
 	}
-	
+
 	/**
 	 * Return all the games present in the DB related to a process
+	 * 
 	 * @param processId Process Id
 	 * @return List of Game
 	 */
@@ -79,13 +74,12 @@ public class GameRestController {
 	public List<InterlinkGame> getGamesByProcessId(@PathVariable String processId) {
 		return gameComponent.findByProcessId(processId);
 	}
-	
-	
+
 	/**
 	 * Return the game with a specific gameId
 	 * 
 	 * @param processId Process ID
-	 * @param name Game name
+	 * @param name      Game name
 	 * @return Game
 	 */
 	@GetMapping(value = "/game/processId/{processId}/name/{name}")
@@ -100,38 +94,38 @@ public class GameRestController {
 	 * @return Message
 	 */
 	@PostMapping(value = "/game/processId/{processId}")
-	public ResponseEntity<?> newGameFromTemplate(@PathVariable String processId, @RequestBody InterlinkGameTemplate template
-			) {
+	public ResponseEntity<?> newGameFromTemplate(@PathVariable String processId,
+			@RequestBody InterlinkGameTemplate template) {
 
 		processId = ControllerUtils.decodePathVariable(processId);
-		
+
 		if ((gameComponent.findByProcessIdAndName(processId, template.getName()).isPresent())) {
-			return new ResponseEntity("Game "+template.getName()+" for process "+processId+ " is already present", HttpStatus.PRECONDITION_FAILED);
+			return new ResponseEntity(
+					"Game " + template.getName() + " for process " + processId + " is already present",
+					HttpStatus.PRECONDITION_FAILED);
 		}
-		
+
 		// instantiate the game in fbk gamification engine
-		if (template.getFilename()!= null && !template.getFilename().isEmpty()) {
+		if (template.getFilename() != null && !template.getFilename().isEmpty()) {
 			try {
 				gamificationComponent.instanceAndConfigureGame(processId, template);
 			} catch (Exception e) {
-				this.logger.error("Error in game cration from file " + template.getFilename()+" ", e);
+				logger.error("Error in game cration from file " + template.getFilename() + " ", e);
 				return new ResponseEntity("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		} else {
-			this.logger.error("Missing filename inside template");
-			return new ResponseEntity("Internal server error", HttpStatus.BAD_REQUEST);
+			logger.error("Missing filename inside template");
+			return new ResponseEntity("Missing filename inside template", HttpStatus.BAD_REQUEST);
 		}
-		
+
 		// instantiate the game in interlink gamification engine
 		InterlinkGame newGame = InterlinkGame.of(template);
 		newGame.setProcessId(processId);
 		newGame = gameComponent.saveOrUpdateGame(newGame);
-		this.logger.info("New game " + newGame.getName() + " for processId " + newGame.getProcessId() + "has been created");
-		
+		logger.info("New game " + newGame.getName() + " for processId " + newGame.getProcessId() + "has been created");
 
 		return new ResponseEntity("Game updated successfully", HttpStatus.OK);
 	}
-
 
 	/**
 	 * Update a game
@@ -145,7 +139,7 @@ public class GameRestController {
 		if ((game.getId() == null) || (gameComponent.findById(game.getId()).isEmpty())) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
-		
+
 		if (!gameComponent.findById(game.getId()).get().isActive()) {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -154,27 +148,29 @@ public class GameRestController {
 		return new ResponseEntity("Game updated successfully", HttpStatus.OK);
 	}
 
-    /**
-     * Return a game task 
-     * @param gameId
-     * @param taskId 
-     * @return Task
-     */
-    @GetMapping(value = "/game/{gameId}/task/{taskId}")
-    public Optional<InterlinkTask> getTask(@PathVariable(name = "gameId") String gameId, @PathVariable(name = "taskId") String taskId) {
-        Optional<InterlinkGame> game = gameComponent.findById(gameId);
-        Optional<InterlinkTask> task = null;
-        if (!game.isPresent())
-        	return Optional.empty();
-        
-        for (InterlinkTask element : game.get().getTaskList()) {
-        	if (element.getId().equals(taskId)) {
-        		task = Optional.of(element);
-        		break;
-        	}
-        }
-        return task;
-    }
+	/**
+	 * Return a game task
+	 * 
+	 * @param gameId
+	 * @param taskId
+	 * @return Task
+	 */
+	@GetMapping(value = "/game/{gameId}/task/{taskId}")
+	public Optional<InterlinkTask> getTask(@PathVariable(name = "gameId") String gameId,
+			@PathVariable(name = "taskId") String taskId) {
+		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		Optional<InterlinkTask> task = null;
+		if (!game.isPresent())
+			return Optional.empty();
+
+		for (InterlinkTask element : game.get().getTaskList()) {
+			if (element.getId().equals(taskId)) {
+				task = Optional.of(element);
+				break;
+			}
+		}
+		return task;
+	}
 
 	/**
 	 * Update a game task
@@ -208,7 +204,7 @@ public class GameRestController {
 		gameComponent.saveOrUpdateGame(game.get());
 		return new ResponseEntity("Task updated successfully", HttpStatus.OK);
 	}
-	
+
 	/**
 	 * Claim a task
 	 * 
@@ -218,8 +214,7 @@ public class GameRestController {
 	 */
 	@PutMapping(value = "/game/{gameId}/task/{taskId}/claim")
 	public ResponseEntity<?> claimTask(@PathVariable(name = "gameId") String gameId,
-			@PathVariable(name = "taskId") String taskId,
-			@RequestBody InterlinkPlayer player) {
+			@PathVariable(name = "taskId") String taskId, @RequestBody InterlinkPlayer player) {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
@@ -236,13 +231,12 @@ public class GameRestController {
 		for (InterlinkTask element : game.get().getTaskList()) {
 			if (element.getId().equals(taskId)) {
 				element.addPlayer(player);
-				update = true;	
+				update = true;
 			}
 		}
 		if (update) {
 			gameComponent.saveOrUpdateGame(game.get());
-			return new ResponseEntity("Player " + player.getId() + " has been added to task " + taskId,
-					HttpStatus.OK);
+			return new ResponseEntity("Player " + player.getId() + " has been added to task " + taskId, HttpStatus.OK);
 		}
 		return new ResponseEntity("Player " + player.getId() + " has non been added to subtask " + taskId,
 				HttpStatus.PRECONDITION_FAILED);
@@ -279,13 +273,15 @@ public class GameRestController {
 				// update subtask player points
 				for (InterlinkTask subtask : task.getSubtaskList()) {
 					if (!subtask.isCompleted()) {
-						return new ResponseEntity("You have to complete  subtask " + subtask.getId() + " before to complete the task " + task.getId(), HttpStatus.PRECONDITION_FAILED);
+						return new ResponseEntity("You have to complete  subtask " + subtask.getId()
+								+ " before to complete the task " + task.getId(), HttpStatus.PRECONDITION_FAILED);
 					}
 				}
-				
+
 				// update task the player points
 				for (InterlinkPlayer player : task.getPlayers()) {
-					gamificationComponent.triggerAction(game.get().getProcessId(), game.get().getName(), "update_player_points", player);
+					gamificationComponent.triggerAction(game.get().getProcessId(), game.get().getName(),
+							"update_player_points", player);
 				}
 
 				task.setCompleted(true);
@@ -298,11 +294,9 @@ public class GameRestController {
 			return new ResponseEntity("Task " + taskId + " has been completed", HttpStatus.OK);
 		}
 		gameComponent.saveOrUpdateGame(game.get());
-		return new ResponseEntity("Task " + taskId + " is not present in game " + gameId, HttpStatus.PRECONDITION_FAILED);
+		return new ResponseEntity("Task " + taskId + " is not present in game " + gameId,
+				HttpStatus.PRECONDITION_FAILED);
 	}
-	
-	
-	
 
 	/**
 	 * Create a subtask
@@ -331,19 +325,19 @@ public class GameRestController {
 			if (element.getId().equals(taskId)) {
 				for (InterlinkTask subElement : element.getSubtaskList()) {
 					if (subElement.getId().equals(subtask.getId()))
-						return new ResponseEntity("Subtask " + subtask.getId() + "  already present", HttpStatus.PRECONDITION_FAILED);
+						return new ResponseEntity("Subtask " + subtask.getId() + "  already present",
+								HttpStatus.PRECONDITION_FAILED);
 				}
-				
+
 				element.getSubtaskList().add(subtask);
-				
-				
+
 			}
 		}
-		
+
 		gameComponent.saveOrUpdateGame(game.get());
 		return new ResponseEntity("Subtask " + subtask.getId() + "  added successfully", HttpStatus.OK);
 	}
-	
+
 	/**
 	 * Get a subtask
 	 * 
@@ -359,28 +353,23 @@ public class GameRestController {
 		Optional<InterlinkTask> subtask = Optional.empty();
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		if (!game.isPresent()) {
-			 return subtask;
+			return subtask;
 		}
 
 		if (!game.get().isActive()) {
-			 return subtask;
+			return subtask;
 		}
-
 
 		for (InterlinkTask element : game.get().getTaskList()) {
 			if (element.getId().equals(taskId)) {
 				for (InterlinkTask subElement : element.getSubtaskList()) {
 					if (subElement.getId().equals(subtaskId))
-						subtask = Optional.of(subElement); 
+						subtask = Optional.of(subElement);
 				}
-				
-				
-				
-				
+
 			}
 		}
-		
-		
+
 		return subtask;
 	}
 
@@ -456,12 +445,14 @@ public class GameRestController {
 					if (subtask.getId().equals(subtaskId)) {
 						if (subtask.isCompleted()) {
 							update = true;
-							return new ResponseEntity("Subtask "+subtaskId+" was already completed", HttpStatus.PRECONDITION_FAILED);
+							return new ResponseEntity("Subtask " + subtaskId + " was already completed",
+									HttpStatus.PRECONDITION_FAILED);
 						}
-						
+
 						// trigger player points assignement
 						for (InterlinkPlayer player : subtask.getPlayers()) {
-							gamificationComponent.triggerAction(game.get().getProcessId(), game.get().getName(), "update_player_points", player);
+							gamificationComponent.triggerAction(game.get().getProcessId(), game.get().getName(),
+									"update_player_points", player);
 						}
 
 						subtask.setCompleted(true);
@@ -562,21 +553,21 @@ public class GameRestController {
 		return new ResponseEntity("Game has been resumed successfully", HttpStatus.OK);
 	}
 
-
 	/**
 	 * Get the array of player profile for a game
+	 * 
 	 * @param gameId
 	 */
 
 	@GetMapping(value = "/game/{gameId}/player")
 	public List<String> getPlayers(@PathVariable String gameId) {
 		List<String> players = new ArrayList<String>();
-		
+
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		if (game.isEmpty()) {
 			return players;
 		}
-			
+
 		players = this.gamificationComponent.getPlayers(game.get().getProcessId(), game.get().getName());
 		return players;
 
@@ -589,32 +580,33 @@ public class GameRestController {
 	@GetMapping(value = "/game/{gameId}/player/{playerId}")
 	public Optional<PlayerState> getPlayerState(@PathVariable String gameId, @PathVariable String playerId) {
 		Optional<PlayerState> playerState = Optional.empty();
-		
+
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		if (game.isEmpty()) {
 			return playerState;
 		}
-		
-	
-		playerState = Optional.of(this.gamificationComponent.getPlayerState(game.get().getProcessId(), game.get().getName(), playerId));
+
+		playerState = Optional.of(
+				this.gamificationComponent.getPlayerState(game.get().getProcessId(), game.get().getName(), playerId));
 		return playerState;
 
 	}
-	
+
 	/**
 	 * Get game statistic
+	 * 
 	 * @param gameId
 	 */
 
 	@GetMapping(value = "/game/{gameId}/stats")
 	public List<GameStatistics> getGameStatistic(@PathVariable String gameId) {
 		List<GameStatistics> stats = new ArrayList<GameStatistics>();
-		
+
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		if (game.isEmpty()) {
 			return stats;
 		}
-			
+
 		stats = this.gamificationComponent.getGameStats(game.get().getProcessId(), game.get().getName());
 		return stats;
 

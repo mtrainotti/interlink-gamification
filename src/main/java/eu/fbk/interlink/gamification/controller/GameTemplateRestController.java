@@ -26,7 +26,7 @@ import eu.fbk.interlink.gamification.util.ControllerUtils;
 @Profile({ "no-sec", "sec", "default" })
 public class GameTemplateRestController {
 
-	private static final Logger logger = LogManager.getLogger(GameTemplateRestController.class); 
+	private static final Logger logger = LogManager.getLogger(GameTemplateRestController.class);
 
 	@Autowired
 	private GameTemplateComponent gameTemplateComponent;
@@ -43,9 +43,13 @@ public class GameTemplateRestController {
 		if ((gametemplate.getId() != null) && (gameTemplateComponent.findById(gametemplate.getId()).isPresent())) {
 			return new ResponseEntity("Gametemplate is already present", HttpStatus.PRECONDITION_FAILED);
 		}
-		// hook to instatiate the new game in FBK gamification engine
-		logger.info("New gametemplate " + gametemplate.getName() + " of processId " + gametemplate.getProcessId()
-				+ "has been created");
+
+		// hook to instatiate the new game in FBK gamification engine.
+		if (logger.isInfoEnabled()) {
+			logger.info("New gametemplate " + gametemplate.getName() + " of processId " + gametemplate.getProcessId()
+					+ "has been created");
+		}
+
 		gameTemplateComponent.saveOrUpdateGame(gametemplate);
 		return new ResponseEntity("Game updated successfully", HttpStatus.OK);
 	}
@@ -59,7 +63,6 @@ public class GameTemplateRestController {
 	@GetMapping(value = "/gametemplate/{gameTemplateId}")
 	public Optional<InterlinkGameTemplate> getGameTemplate(@PathVariable String gameTemplateId) {
 		gameTemplateId = ControllerUtils.decodePathVariable(gameTemplateId);
-		logger.info("/gametemplate/{gameTemplateId}");
 		return gameTemplateComponent.findById(gameTemplateId);
 	}
 
@@ -88,6 +91,7 @@ public class GameTemplateRestController {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			logger.error(e.getMessage());
 			new ResponseEntity("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		return new ResponseEntity("Template has been refreshed", HttpStatus.OK);
