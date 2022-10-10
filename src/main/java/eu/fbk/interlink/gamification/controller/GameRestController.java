@@ -184,34 +184,43 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
-
+		
 		if (!game.get().isActive()) {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
-
-		for (InterlinkTask element : game.get().getTaskList()) {
-			if (element.getId().equals(task.getId())) {
-				element.setCompleted(task.isCompleted());
-				element.setDevelopment(task.getDevelopment());
-				element.setExploitation(task.getExploitation());
-				element.setManagement(task.getManagement());
-				element.setSubtaskList(task.getSubtaskList());
-				for (InterlinkPlayer player : element.getPlayers()) {
-					for (InterlinkPlayer updated : task.getPlayers()) {
-						if (updated.getId().equalsIgnoreCase(player.getId())) {
-							player.setDevelopment(updated.getDevelopment());
-							player.setExploitation(updated.getExploitation());
-							player.setManagement(updated.getManagement());
-						}
-					}
+		
+		InterlinkTask savedTask = game.get().getTaskList().stream().filter(t -> task.getId().equals(t.getId()))
+				.findAny().orElse(null);
+		
+		if (savedTask != null) {
+			savedTask.setCompleted(task.isCompleted());
+			savedTask.setDevelopment(task.getDevelopment());
+			savedTask.setExploitation(task.getExploitation());
+			savedTask.setManagement(task.getManagement());
+			savedTask.setSubtaskList(task.getSubtaskList());
+		
+			for (InterlinkPlayer updated : task.getPlayers()) {
+				InterlinkPlayer savedPlayer = savedTask.getPlayers().stream()
+						.filter(p -> p.getId().equals(updated.getId())).findAny().orElse(null);
+				if (savedPlayer != null) {
+					savedPlayer.setName(updated.getName());
+					savedPlayer.setDevelopment(updated.getDevelopment());
+					savedPlayer.setExploitation(updated.getExploitation());
+					savedPlayer.setManagement(updated.getManagement());
+				} else {
+					savedTask.getPlayers().add(updated);
 				}
 			}
+			gameComponent.saveOrUpdateGame(game.get());
+			return new ResponseEntity("Task updated successfully", HttpStatus.OK);
+		} else {
+			return new ResponseEntity("Task " + task.getId() + " not present inside game",
+					HttpStatus.PRECONDITION_FAILED);
 		}
-		gameComponent.saveOrUpdateGame(game.get());
-		return new ResponseEntity("Task updated successfully", HttpStatus.OK);
 	}
 
 	/**
@@ -227,7 +236,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		String idTask = ControllerUtils.decodePathVariable(taskId);
-		
+
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
@@ -237,8 +246,8 @@ public class GameRestController {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
 
-		InterlinkTask task = game.get().getTaskList().stream().filter(t -> idTask.equals(t.getId()))
-				.findAny().orElse(null);
+		InterlinkTask task = game.get().getTaskList().stream().filter(t -> idTask.equals(t.getId())).findAny()
+				.orElse(null);
 
 		if (task != null) {
 			boolean update = false;
@@ -340,7 +349,7 @@ public class GameRestController {
 		if (!game.get().isActive()) {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
-		
+
 		if (ControllerUtils.isEmpty(subtask.getId())) {
 			return new ResponseEntity("subTask Id cannot be null", HttpStatus.BAD_REQUEST);
 		}
@@ -421,16 +430,15 @@ public class GameRestController {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
 
-				
-		InterlinkTask task = game.get().getTaskList().stream().filter(t -> taskId.equals(t.getId()))
-				.findAny().orElse(null);
-		
+		InterlinkTask task = game.get().getTaskList().stream().filter(t -> taskId.equals(t.getId())).findAny()
+				.orElse(null);
+
 		if (task != null) {
-			InterlinkTask subTask = task.getSubtaskList().stream().filter(st -> subtaskId.equals(st.getId()))
-					.findAny().orElse(null);
+			InterlinkTask subTask = task.getSubtaskList().stream().filter(st -> subtaskId.equals(st.getId())).findAny()
+					.orElse(null);
 			if (subTask != null) {
-				InterlinkPlayer isPresent = subTask.getPlayers().stream()
-						.filter(p -> player.getId().equals(p.getId())).findAny().orElse(null);
+				InterlinkPlayer isPresent = subTask.getPlayers().stream().filter(p -> player.getId().equals(p.getId()))
+						.findAny().orElse(null);
 				if (isPresent == null) {
 					subTask.addPlayer(player);
 					gameComponent.saveOrUpdateGame(game.get());
@@ -442,10 +450,10 @@ public class GameRestController {
 				}
 			}
 		}
-		
+
 		return new ResponseEntity("Player " + player.getId() + " has non been added to subtask " + subtaskId,
 				HttpStatus.PRECONDITION_FAILED);
-		
+
 	}
 
 	/**
