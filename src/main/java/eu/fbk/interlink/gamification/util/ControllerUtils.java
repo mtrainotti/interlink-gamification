@@ -13,4 +13,12 @@ public class ControllerUtils {
             throw new IllegalArgumentException(String.format("%s is not UTF-8 encoded", variable));
         }
     }
+    
+	public static boolean isEmpty(String value) {
+		boolean result = true;
+		if ((value != null) && (!value.isEmpty())) {
+			result = false;
+		}
+		return result;
+	}
 }

@@ -340,6 +340,10 @@ public class GameRestController {
 		if (!game.get().isActive()) {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
+		
+		if (ControllerUtils.isEmpty(subtask.getId())) {
+			return new ResponseEntity("subTask Id cannot be null", HttpStatus.BAD_REQUEST);
+		}
 
 		boolean update = false;
 
