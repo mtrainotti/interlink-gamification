@@ -237,7 +237,7 @@ public class GameRestController {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
 
-		InterlinkTask task = game.get().getTaskList().stream().filter(matchedTask -> idTask.equals(matchedTask.getId()))
+		InterlinkTask task = game.get().getTaskList().stream().filter(t -> idTask.equals(t.getId()))
 				.findAny().orElse(null);
 
 		if (task != null) {
@@ -421,25 +421,31 @@ public class GameRestController {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
 
-		boolean update = false;
-
-		for (InterlinkTask element : game.get().getTaskList()) {
-			if (element.getId().equals(taskId)) {
-				for (InterlinkTask subtask : element.getSubtaskList()) {
-					if (subtask.getId().equals(subtaskId)) {
-						subtask.addPlayer(player);
-						update = true;
-					}
+				
+		InterlinkTask task = game.get().getTaskList().stream().filter(t -> taskId.equals(t.getId()))
+				.findAny().orElse(null);
+		
+		if (task != null) {
+			InterlinkTask subTask = task.getSubtaskList().stream().filter(st -> subtaskId.equals(st.getId()))
+					.findAny().orElse(null);
+			if (subTask != null) {
+				InterlinkPlayer isPresent = subTask.getPlayers().stream()
+						.filter(p -> player.getId().equals(p.getId())).findAny().orElse(null);
+				if (isPresent == null) {
+					subTask.addPlayer(player);
+					gameComponent.saveOrUpdateGame(game.get());
+					return new ResponseEntity("Player " + player.getId() + " has been added to subtask " + subtaskId,
+							HttpStatus.OK);
+				} else {
+					return new ResponseEntity("Player " + player.getId() + " already present inside task " + taskId,
+							HttpStatus.PRECONDITION_FAILED);
 				}
 			}
 		}
-		if (update) {
-			gameComponent.saveOrUpdateGame(game.get());
-			return new ResponseEntity("Player " + player.getId() + " has been added to subtask " + subtaskId,
-					HttpStatus.OK);
-		}
+		
 		return new ResponseEntity("Player " + player.getId() + " has non been added to subtask " + subtaskId,
 				HttpStatus.PRECONDITION_FAILED);
+		
 	}
 
 	/**
