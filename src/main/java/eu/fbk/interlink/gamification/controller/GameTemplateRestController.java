@@ -85,7 +85,6 @@ public class GameTemplateRestController {
 	 */
 	@GetMapping(value = "/gametemplate/refresh")
 	public ResponseEntity<?> refresh() {
-
 		try {
 			gameTemplateComponent.refresh();
 		} catch (Exception e) {

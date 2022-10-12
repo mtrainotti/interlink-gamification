@@ -59,6 +59,7 @@ public class GameRestController {
 	 */
 	@GetMapping(value = "/game/{gameId}")
 	public Optional<InterlinkGame> getGame(@PathVariable String gameId) {
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 
 		return game;
@@ -158,6 +159,7 @@ public class GameRestController {
 	@GetMapping(value = "/game/{gameId}/task/{taskId}")
 	public Optional<InterlinkTask> getTask(@PathVariable(name = "gameId") String gameId,
 			@PathVariable(name = "taskId") String taskId) {
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		Optional<InterlinkTask> task = null;
 		if (!game.isPresent())
@@ -284,7 +286,9 @@ public class GameRestController {
 	public ResponseEntity<?> completeTask(@PathVariable(name = "gameId") String gameId,
 			@PathVariable(name = "taskId") String taskId) {
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -341,7 +345,9 @@ public class GameRestController {
 	public ResponseEntity<?> newSubtask(@PathVariable(name = "gameId") String gameId,
 			@PathVariable(name = "taskId") String taskId, @RequestBody InterlinkTask subtask) {
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -386,7 +392,9 @@ public class GameRestController {
 			@PathVariable(name = "taskId") String taskId, @PathVariable(name = "subtaskId") String subtaskId) {
 
 		Optional<InterlinkTask> subtask = Optional.empty();
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (!game.isPresent()) {
 			return subtask;
 		}
@@ -421,7 +429,9 @@ public class GameRestController {
 			@PathVariable(name = "taskId") String taskId, @PathVariable(name = "subtaskId") String subtaskId,
 			@RequestBody InterlinkPlayer player) {
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -468,7 +478,9 @@ public class GameRestController {
 	public ResponseEntity<?> completeSubtask(@PathVariable(name = "gameId") String gameId,
 			@PathVariable(name = "taskId") String taskId, @PathVariable(name = "subtaskId") String subtaskId) {
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -571,7 +583,9 @@ public class GameRestController {
 	@PutMapping(value = "/game/{gameId}/suspend")
 	public ResponseEntity<?> suspendGame(@PathVariable String gameId) {
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (game.isEmpty()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -591,7 +605,9 @@ public class GameRestController {
 	@PutMapping(value = "/game/{gameId}/resume")
 	public ResponseEntity<?> resumeGame(@PathVariable String gameId) {
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (game.isEmpty()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -615,7 +631,9 @@ public class GameRestController {
 	public List<String> getPlayers(@PathVariable String gameId) {
 		List<String> players = new ArrayList<String>();
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (game.isEmpty()) {
 			return players;
 		}
@@ -633,7 +651,9 @@ public class GameRestController {
 	public Optional<PlayerState> getPlayerState(@PathVariable String gameId, @PathVariable String playerId) {
 		Optional<PlayerState> playerState = Optional.empty();
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (game.isEmpty()) {
 			return playerState;
 		}
@@ -654,7 +674,9 @@ public class GameRestController {
 	public List<GameStatistics> getGameStatistic(@PathVariable String gameId) {
 		List<GameStatistics> stats = new ArrayList<GameStatistics>();
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+		
 		if (game.isEmpty()) {
 			return stats;
 		}
