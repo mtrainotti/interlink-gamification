@@ -520,37 +520,49 @@ public class GameRestController {
 	public ResponseEntity<?> updateSubtask(@PathVariable(name = "gameId") String gameId,
 			@PathVariable(name = "taskId") String taskId, @RequestBody InterlinkTask subtask) {
 
+		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
+
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
-
+		
 		if (!game.get().isActive()) {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
 
-		boolean update = false;
+		InterlinkTask savedTask = game.get().getTaskList().stream().filter(t -> taskId.equals(t.getId())).findAny()
+				.orElse(null);
 
-		for (InterlinkTask element : game.get().getTaskList()) {
-			if (element.getId().equals(taskId)) {
-				for (InterlinkTask toUpdate : element.getSubtaskList()) {
-					if (toUpdate.getId().equals(subtask.getId())) {
-						toUpdate.setDevelopment(subtask.getDevelopment());
-						toUpdate.setManagement(subtask.getManagement());
-						toUpdate.setExploitation(subtask.getExploitation());
-						toUpdate.setCompleted(subtask.isCompleted());
-						toUpdate.setPlayers(subtask.getPlayers());
-						update = true;
+		if (savedTask != null) {
+			InterlinkTask savedSubTask = savedTask.getSubtaskList().stream()
+					.filter(st -> subtask.getId().equals(st.getId())).findAny().orElse(null);
+			
+			if (savedSubTask != null) {
+				savedSubTask.setDevelopment(subtask.getDevelopment());
+				savedSubTask.setManagement(subtask.getManagement());
+				savedSubTask.setExploitation(subtask.getExploitation());
+				savedSubTask.setCompleted(subtask.isCompleted());
+				for (InterlinkPlayer updated : subtask.getPlayers()) {
+					InterlinkPlayer savedPlayer = savedSubTask.getPlayers().stream()
+							.filter(p -> p.getId().equals(updated.getId())).findAny().orElse(null);
+					if (savedPlayer != null) {
+						savedPlayer.setName(updated.getName());
+						savedPlayer.setDevelopment(updated.getDevelopment());
+						savedPlayer.setExploitation(updated.getExploitation());
+						savedPlayer.setManagement(updated.getManagement());
+					} else {
+						savedSubTask.getPlayers().add(updated);
 					}
 				}
+				gameComponent.saveOrUpdateGame(game.get());				
+				return new ResponseEntity("Subtask " + subtask.getId() + " has been updated", HttpStatus.OK);
+			} else {
+				return new ResponseEntity("SubTask " + subtask.getId() + " not present inside game", HttpStatus.PRECONDITION_FAILED);	
 			}
+		} else {
+			return new ResponseEntity("Task " + taskId + " not present inside game", HttpStatus.PRECONDITION_FAILED);
 		}
-		if (update) {
-			gameComponent.saveOrUpdateGame(game.get());
-			return new ResponseEntity("Subtask " + subtask.getId() + " has been updated", HttpStatus.OK);
-		}
-		return new ResponseEntity("Subtask " + subtask.getId() + " has non been updated",
-				HttpStatus.PRECONDITION_FAILED);
 	}
 
 	/**
