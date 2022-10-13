@@ -111,7 +111,7 @@ public class GameRestController {
 			try {
 				gamificationComponent.instanceAndConfigureGame(processId, template);
 			} catch (Exception e) {
-				logger.error("Error in game cration from file " + template.getFilename() + " ", e);
+				logger.error("Error in game creation from file " + template.getFilename() + " ", e);
 				return new ResponseEntity("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		} else {
