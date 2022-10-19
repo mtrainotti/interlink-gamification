@@ -63,7 +63,6 @@ public class GamificationApplicationTests {
 	}
 
 	private void initClasspathRuleGame() {
-		mongo.getDb().drop();
 		gameManager.saveGameDefinition(defineGame().toGame());
 		// add rules
 		gameManager.addRule(new ClasspathRule(GAME, "rules/" + GAME + "/update_exploitation_points.drl"));
