@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import eu.fbk.interlink.gamification.domain.InterlinkGameTemplate;
 import eu.fbk.interlink.gamification.domain.InterlinkPlayer;
+import eu.fbk.interlink.gamification.domain.InterlinkTask;
 import eu.fbk.interlink.gamification.sec.IdentityLookupComponent;
 import eu.fbk.interlink.gamification.util.JsonDB;
 import eu.trentorise.game.managers.NotificationManager;
@@ -79,6 +80,7 @@ public class GamificationEngineFacadeComponent {
 
 	/**
 	 * Trigger the user action in the gamification engine
+	 * @param task 
 	 * 
 	 * @param gameId
 	 * @param actionId
@@ -86,13 +88,19 @@ public class GamificationEngineFacadeComponent {
 	 * @param data
 	 */
 
-	public void triggerAction(String processId, String name, String action, InterlinkPlayer player) {
+	public void triggerAction(String processId, String name, String action, InterlinkPlayer player, InterlinkTask task) {
 
 		Map<String, Object> data = new HashMap<String, Object>();
 
+		// contribution of players.
 		data.put("development", Double.valueOf(player.getDevelopment()));
 		data.put("management", (double) player.getManagement());
 		data.put("exploitation", (double) player.getExploitation());
+		
+		// complexity
+		data.put("devComplexity", task.getDevelopment());
+		data.put("manageComplexity", task.getManagement());
+		data.put("exploitComplexity", task.getExploitation());
 
 		workflow.apply(getGameId(processId, name), action, player.getId(), data, null);
 

@@ -46,7 +46,7 @@ public class GameRestController {
 	 * 
 	 * @return List of Game
 	 */
-	@GetMapping(value = "/game/")
+	@GetMapping(value = "/game")
 	public List<InterlinkGame> getAllGames() {
 		return gameComponent.findAll();
 	}
@@ -316,7 +316,7 @@ public class GameRestController {
 				// update task the player points
 				for (InterlinkPlayer player : task.getPlayers()) {
 					gamificationComponent.triggerAction(game.get().getProcessId(), game.get().getName(),
-							"update_player_points", player);
+							"update_player_points", player, task);
 				}
 
 				task.setCompleted(true);
@@ -504,7 +504,7 @@ public class GameRestController {
 						// trigger player points assignement
 						for (InterlinkPlayer player : subtask.getPlayers()) {
 							gamificationComponent.triggerAction(game.get().getProcessId(), game.get().getName(),
-									"update_player_points", player);
+									"update_player_points", player, subtask);
 						}
 
 						subtask.setCompleted(true);
