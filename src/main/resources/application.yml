@@ -19,10 +19,10 @@ spring:
       matching-strategy: ANT_PATH_MATCHER
 
 import: 
-  dir: /Users/mtrainotti/dev
+  dir: /home/dev/gamification/interlink
 
 export: 
-  dir: /Users/mtrainotti/dev
+  dir: /home/dev/gamification/interlink
 
 
 #
