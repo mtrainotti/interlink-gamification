@@ -137,9 +137,9 @@ public class GamificationEngineFacadeComponent {
 	 * @param name
 	 * @return
 	 */
-	public List<GameStatistics> getGameStats(String processId, String name) {
+	public List<GameStatistics> getGameStats(String processId, String name, String pointConcept) {
 
-		return gameSrv.loadGameStats(getGameId(processId, name), null, null, null, null, null);
+		return gameSrv.loadGameStats(getGameId(processId, name), pointConcept, null, null, null, null);
 	}
 
 }

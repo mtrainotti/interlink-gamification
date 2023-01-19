@@ -8,6 +8,9 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import eu.fbk.interlink.gamification.component.GameComponent;
@@ -24,9 +28,15 @@ import eu.fbk.interlink.gamification.domain.InterlinkGame;
 import eu.fbk.interlink.gamification.domain.InterlinkGameTemplate;
 import eu.fbk.interlink.gamification.domain.InterlinkPlayer;
 import eu.fbk.interlink.gamification.domain.InterlinkTask;
+import eu.fbk.interlink.gamification.domain.PlayerScore;
+import eu.fbk.interlink.gamification.domain.PlayerStateDTO;
+import eu.fbk.interlink.gamification.repository.InterLinkerRepository;
 import eu.fbk.interlink.gamification.util.ControllerUtils;
 import eu.trentorise.game.model.GameStatistics;
 import eu.trentorise.game.model.PlayerState;
+import eu.trentorise.game.repo.StatePersistence;
+import eu.trentorise.game.services.PlayerService;
+import io.swagger.annotations.ApiParam;
 
 @RestController
 @RequestMapping("/interlink")
@@ -37,9 +47,12 @@ public class GameRestController {
 
 	@Autowired
 	private GameComponent gameComponent;
-
+	
 	@Autowired
 	private GamificationEngineFacadeComponent gamificationComponent;
+	
+	@Autowired
+	private InterLinkerRepository interlinkRepo;
 
 	/**
 	 * Return all the games present in the DB
@@ -648,19 +661,19 @@ public class GameRestController {
 	 */
 
 	@GetMapping(value = "/game/{gameId}/player/{playerId}")
-	public Optional<PlayerState> getPlayerState(@PathVariable String gameId, @PathVariable String playerId) {
+	public PlayerStateDTO getPlayerState(@PathVariable String gameId, @PathVariable String playerId) {
 		Optional<PlayerState> playerState = Optional.empty();
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 		
 		if (game.isEmpty()) {
-			return playerState;
+			return null;
 		}
 
 		playerState = Optional.of(
 				this.gamificationComponent.getPlayerState(game.get().getProcessId(), game.get().getName(), playerId));
-		return playerState;
+		return ControllerUtils.convertPlayerState(playerState.get());
 
 	}
 
@@ -670,8 +683,8 @@ public class GameRestController {
 	 * @param gameId
 	 */
 
-	@GetMapping(value = "/game/{gameId}/stats")
-	public List<GameStatistics> getGameStatistic(@PathVariable String gameId) {
+	@GetMapping(value = "/game/{gameId}/stats/{pointConcept}")
+	public List<GameStatistics> getGameStatistic(@PathVariable String gameId, @PathVariable String pointConcept) {
 		List<GameStatistics> stats = new ArrayList<GameStatistics>();
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
@@ -681,9 +694,37 @@ public class GameRestController {
 			return stats;
 		}
 
-		stats = this.gamificationComponent.getGameStats(game.get().getProcessId(), game.get().getName());
+		stats = this.gamificationComponent.getGameStats(game.get().getProcessId(), game.get().getName(), pointConcept);
 		return stats;
 
 	}
+	
+    @GetMapping(value = "/game/{gameId}/player/search")
+    public Page<PlayerScore> searchByQuery(
+            @PathVariable @ApiParam(name = "gameId") String gameId,
+            @RequestParam @ApiParam(name = "period", value = "global", allowableValues = "currentWeek, previousWeek, global") String period,
+            @RequestParam @ApiParam(name = "activityType", value = "management", allowableValues="development, management, exploitation") String activityType,
+            Pageable pageable) {
+    	gameId = ControllerUtils.decodePathVariable(gameId);
+    	Optional<InterlinkGame> game = gameComponent.findById(gameId);
+
+    	if (game.isEmpty()) {
+    		return null;
+    	}
+    	
+    	gameId = ControllerUtils.getGameId(game.get().getProcessId(), game.get().getName());
+        Page<StatePersistence> states = interlinkRepo.search(gameId, activityType, period, pageable);
+        
+        List<PlayerScore> players = new ArrayList<PlayerScore>();
+        
+        for (StatePersistence state: states) {
+             players.add(ControllerUtils.convertPlayerState(state, activityType));        	
+        }
+        
+        Page<PlayerScore> result = new PageImpl<>(players, pageable, states.getTotalElements());
+
+        return result;
+
+    }
 
 }
