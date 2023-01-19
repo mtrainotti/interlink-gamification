@@ -35,7 +35,6 @@ import eu.fbk.interlink.gamification.util.ControllerUtils;
 import eu.trentorise.game.model.GameStatistics;
 import eu.trentorise.game.model.PlayerState;
 import eu.trentorise.game.repo.StatePersistence;
-import eu.trentorise.game.services.PlayerService;
 import io.swagger.annotations.ApiParam;
 
 @RestController
@@ -712,6 +711,7 @@ public class GameRestController {
     		return null;
     	}
     	
+    	InterlinkGame g = gameComponent.findById(gameId).get();
     	gameId = ControllerUtils.getGameId(game.get().getProcessId(), game.get().getName());
         Page<StatePersistence> states = interlinkRepo.search(gameId, activityType, period, pageable);
         

@@ -1,6 +1,8 @@
 package eu.fbk.interlink.gamification.repository;
 
+import java.util.Calendar;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,25 +20,78 @@ import org.springframework.stereotype.Component;
 import com.mongodb.MongoException;
 
 import eu.trentorise.game.core.LogHub;
+import eu.trentorise.game.managers.ClassificationUtils;
+import eu.trentorise.game.model.Game;
+import eu.trentorise.game.model.PointConcept.PeriodInstance;
+import eu.trentorise.game.repo.GamePersistence;
 import eu.trentorise.game.repo.PlayerRepoImpl;
 import eu.trentorise.game.repo.StatePersistence;
 
 @Component
 public class InterLinkerRepository {
 
-	private static final Logger logger = LoggerFactory.getLogger(PlayerRepoImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(InterLinkerRepository.class);
+	
 	@Autowired
 	private MongoTemplate mongo;
+	
+	@Autowired
+	private eu.trentorise.game.repo.GameRepo gameRepo;
+	
 
 	public Page<StatePersistence> search(String gameId, String pcName, String period, Pageable pageable) {
 		List<StatePersistence> result = null;
 		long totalSize = 0;
+		
+		GamePersistence g = gameRepo.findById(gameId).get();
+		
 		try {
 			Query q = new Query();
 			q.addCriteria(Criteria.where("gameId").is(gameId));
-			q.with(Sort.by(Sort.Order.desc("concepts.PointConcept." + pcName + ".obj.score")));
-			q.fields().include("concepts.PointConcept." + pcName + ".obj.score");
 			q.fields().include("playerId");
+			
+			/**
+			db.playerState.find( 
+			{
+			 "gameId":"57ac710fd4c6ac7872b0e7a1"
+			},
+			{
+			"concepts.PointConcept.green leaves.obj.periods.weekly.instances.2016-09-03T00:00:00.score" : 1,
+			"playerId": 1
+			}
+			).sort(
+			{
+			"concepts.PointConcept.green leaves.obj.periods.weekly.instances.2016-09-10T00:00:00.score": -1 
+			}
+			);
+			**/
+			
+			if (period.equalsIgnoreCase("global")) {
+				q.fields().include("concepts.PointConcept." + pcName + ".obj.score");
+				q.with(Sort.by(Sort.Order.desc("concepts.PointConcept." + pcName + ".obj.score")));	
+			} else if (period.equalsIgnoreCase("currentWeek")) {
+				Calendar cal = Calendar.getInstance();
+				long moment = cal.getTimeInMillis();
+				PeriodInstance periodInstance = ClassificationUtils.retrieveWindow(g.toGame(), "weekly",
+						pcName, moment, -1);
+				if (periodInstance != null) {
+					String key = ClassificationUtils.generateKey(periodInstance);
+					q.fields().include("concepts.PointConcept." + pcName + ".obj.periods.weekly.instances." + key +".score");
+					q.with(Sort.by(Sort.Order.desc("concepts.PointConcept." + pcName + ".obj.periods.weekly.instances." + key + ".score")));
+				}
+			} else if (period.equalsIgnoreCase("previousWeek")) {
+				Calendar cal = Calendar.getInstance();
+				cal.add(Calendar.DAY_OF_WEEK, -7);
+				long moment = cal.getTimeInMillis();
+				PeriodInstance periodInstance = ClassificationUtils.retrieveWindow(g.toGame(), "weekly",
+						pcName, moment, -1);
+				if (periodInstance != null) {
+					String key = ClassificationUtils.generateKey(periodInstance);
+					q.fields().include("concepts.PointConcept." + pcName + ".obj.periods.weekly.instances." + key +".score");
+					q.with(Sort.by(Sort.Order.desc("concepts.PointConcept." + pcName + ".obj.periods.weekly.instances." + key + ".score")));
+				}		
+			}
+			
 			result = mongo.find(q, StatePersistence.class);
 			totalSize = mongo.count(q, StatePersistence.class);
 
