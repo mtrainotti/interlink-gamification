@@ -38,7 +38,6 @@ public class ControllerUtils {
 			res.setGameId(ps.getGameId());
 			res.setPlayerId(ps.getPlayerId());
 			res.setState(new HashMap<String, Set<GameConcept>>());
-			// FIXME state is never null in PlayerState by design
 			if (ps.getState() != null) {
 				for (GameConcept gc : ps.getState()) {
 					String conceptType = gc.getClass().getSimpleName();
@@ -50,12 +49,7 @@ public class ControllerUtils {
 					gcSet.add(gc);
 				}
 			}
-
-//			res.getLevels().addAll(ps.getLevels());
-//			res.setInventory(ps.getInventory());
-
 		}
-
 		return res;
 	}
 
@@ -70,16 +64,19 @@ public class ControllerUtils {
 		return processId.concat("-").concat(name);
 	}
 
-	public static PlayerScore convertPlayerState(StatePersistence state, String pcName) {
+	public static PlayerScore convertPlayerState(StatePersistence state, String pcName, String period, String key) {
 		PlayerScore res = null;
 		if (state != null) {
 			res = new PlayerScore();
 			res.setPlayerId(state.getPlayerId());
-			if (state.getConcepts().get("PointConcept").containsKey(pcName)) {
-				res.setScore(String.valueOf(state.getConcepts().get("PointConcept").get(pcName).getObj().get("score")));
+			if (period.equalsIgnoreCase("global")) {
+				if (state.getConcepts().get("PointConcept").containsKey(pcName)) {
+					res.setScore(state.getGeneralItemScore(pcName));
+				}
+			} else {
+				res.setScore(state.getIncrementalScore(pcName, "weekly", key));
 			}
 		}
-
 		return res;
 	}
 

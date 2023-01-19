@@ -3,7 +3,7 @@ package eu.fbk.interlink.gamification.domain;
 public class PlayerScore {
 
 	private String playerId;
-	private String score;
+	private Double score;
 
 	public String getPlayerId() {
 		return playerId;
@@ -13,11 +13,11 @@ public class PlayerScore {
 		this.playerId = playerId;
 	}
 
-	public String getScore() {
+	public Double getScore() {
 		return score;
 	}
 
-	public void setScore(String score) {
+	public void setScore(Double score) {
 		this.score = score;
 	}
 

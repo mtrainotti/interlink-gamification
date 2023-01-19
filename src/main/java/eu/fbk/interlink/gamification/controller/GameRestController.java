@@ -9,7 +9,6 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +33,6 @@ import eu.fbk.interlink.gamification.repository.InterLinkerRepository;
 import eu.fbk.interlink.gamification.util.ControllerUtils;
 import eu.trentorise.game.model.GameStatistics;
 import eu.trentorise.game.model.PlayerState;
-import eu.trentorise.game.repo.StatePersistence;
 import io.swagger.annotations.ApiParam;
 
 @RestController
@@ -46,10 +44,10 @@ public class GameRestController {
 
 	@Autowired
 	private GameComponent gameComponent;
-	
+
 	@Autowired
 	private GamificationEngineFacadeComponent gamificationComponent;
-	
+
 	@Autowired
 	private InterLinkerRepository interlinkRepo;
 
@@ -202,21 +200,21 @@ public class GameRestController {
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
-		
+
 		if (!game.get().isActive()) {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
-		
+
 		InterlinkTask savedTask = game.get().getTaskList().stream().filter(t -> task.getId().equals(t.getId()))
 				.findAny().orElse(null);
-		
+
 		if (savedTask != null) {
 			savedTask.setCompleted(task.isCompleted());
 			savedTask.setDevelopment(task.getDevelopment());
 			savedTask.setExploitation(task.getExploitation());
 			savedTask.setManagement(task.getManagement());
 			savedTask.setSubtaskList(task.getSubtaskList());
-		
+
 			for (InterlinkPlayer updated : task.getPlayers()) {
 				InterlinkPlayer savedPlayer = savedTask.getPlayers().stream()
 						.filter(p -> p.getId().equals(updated.getId())).findAny().orElse(null);
@@ -300,7 +298,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -359,7 +357,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -406,7 +404,7 @@ public class GameRestController {
 		Optional<InterlinkTask> subtask = Optional.empty();
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (!game.isPresent()) {
 			return subtask;
 		}
@@ -443,7 +441,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -492,7 +490,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -550,7 +548,7 @@ public class GameRestController {
 		if (!game.isPresent()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
-		
+
 		if (!game.get().isActive()) {
 			return new ResponseEntity("Game is suspended", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -561,7 +559,7 @@ public class GameRestController {
 		if (savedTask != null) {
 			InterlinkTask savedSubTask = savedTask.getSubtaskList().stream()
 					.filter(st -> subtask.getId().equals(st.getId())).findAny().orElse(null);
-			
+
 			if (savedSubTask != null) {
 				savedSubTask.setDevelopment(subtask.getDevelopment());
 				savedSubTask.setManagement(subtask.getManagement());
@@ -579,10 +577,11 @@ public class GameRestController {
 						savedSubTask.getPlayers().add(updated);
 					}
 				}
-				gameComponent.saveOrUpdateGame(game.get());				
+				gameComponent.saveOrUpdateGame(game.get());
 				return new ResponseEntity("Subtask " + subtask.getId() + " has been updated", HttpStatus.OK);
 			} else {
-				return new ResponseEntity("SubTask " + subtask.getId() + " not present inside game", HttpStatus.PRECONDITION_FAILED);	
+				return new ResponseEntity("SubTask " + subtask.getId() + " not present inside game",
+						HttpStatus.PRECONDITION_FAILED);
 			}
 		} else {
 			return new ResponseEntity("Task " + taskId + " not present inside game", HttpStatus.PRECONDITION_FAILED);
@@ -597,7 +596,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (game.isEmpty()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -619,7 +618,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (game.isEmpty()) {
 			return new ResponseEntity("Game is not present", HttpStatus.PRECONDITION_FAILED);
 		}
@@ -645,7 +644,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (game.isEmpty()) {
 			return players;
 		}
@@ -665,7 +664,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (game.isEmpty()) {
 			return null;
 		}
@@ -688,7 +687,7 @@ public class GameRestController {
 
 		gameId = ControllerUtils.decodePathVariable(gameId);
 		Optional<InterlinkGame> game = gameComponent.findById(gameId);
-		
+
 		if (game.isEmpty()) {
 			return stats;
 		}
@@ -697,34 +696,22 @@ public class GameRestController {
 		return stats;
 
 	}
-	
-    @GetMapping(value = "/game/{gameId}/player/search")
-    public Page<PlayerScore> searchByQuery(
-            @PathVariable @ApiParam(name = "gameId") String gameId,
-            @RequestParam @ApiParam(name = "period", value = "global", allowableValues = "currentWeek, previousWeek, global") String period,
-            @RequestParam @ApiParam(name = "activityType", value = "management", allowableValues="development, management, exploitation") String activityType,
-            Pageable pageable) {
-    	gameId = ControllerUtils.decodePathVariable(gameId);
-    	Optional<InterlinkGame> game = gameComponent.findById(gameId);
 
-    	if (game.isEmpty()) {
-    		return null;
-    	}
-    	
-    	InterlinkGame g = gameComponent.findById(gameId).get();
-    	gameId = ControllerUtils.getGameId(game.get().getProcessId(), game.get().getName());
-        Page<StatePersistence> states = interlinkRepo.search(gameId, activityType, period, pageable);
-        
-        List<PlayerScore> players = new ArrayList<PlayerScore>();
-        
-        for (StatePersistence state: states) {
-             players.add(ControllerUtils.convertPlayerState(state, activityType));        	
-        }
-        
-        Page<PlayerScore> result = new PageImpl<>(players, pageable, states.getTotalElements());
+	@GetMapping(value = "/game/{gameId}/player/search")
+	public Page<PlayerScore> searchByQuery(@PathVariable @ApiParam(name = "gameId") String gameId,
+			@RequestParam @ApiParam(name = "period", value = "global", allowableValues = "currentWeek, previousWeek, global") String period,
+			@RequestParam @ApiParam(name = "activityType", value = "management", allowableValues = "development, management, exploitation") String activityType,
+			Pageable pageable) {
+		gameId = ControllerUtils.decodePathVariable(gameId);
+		Optional<InterlinkGame> game = gameComponent.findById(gameId);
 
-        return result;
+		if (game.isEmpty()) {
+			return null;
+		}
 
-    }
+		gameId = ControllerUtils.getGameId(game.get().getProcessId(), game.get().getName());
+		return interlinkRepo.search(gameId, activityType, period, pageable);
+
+	}
 
 }
