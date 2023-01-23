@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:experimental
 FROM maven:3-openjdk-11 as mvn
 COPY ./ /tmp/interlink-gamification
-#COPY ./game_1.json /home/dev/gamification/interlink/game_1.json
 WORKDIR /tmp/interlink-gamification
 RUN mvn clean package -DskipTests
 
@@ -21,5 +20,6 @@ RUN  addgroup -g ${USER_GROUP_ID} ${USER_GROUP}; \
 
 WORKDIR ${USER_HOME}
 COPY --chown=interlink-gamification:interlink-gamification --from=mvn /tmp/interlink-gamification/target/${APP}.jar ${USER_HOME}
+COPY --chown=interlink-gamification:interlink-gamification --from=mvn /tmp/interlink-gamification/game_1.json ${USER_HOME}
 USER interlink-gamification
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar ${APP}.jar --spring.profiles.active=sec"]
